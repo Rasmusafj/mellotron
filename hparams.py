@@ -1,11 +1,12 @@
-import tensorflow as tf
+from tensorflow import contrib as contrib
+from tensorflow import compat as compat
 from text.symbols import symbols
 
 
 def create_hparams(hparams_string=None, verbose=False):
     """Create model hyperparameters. Parse nondefault from given string."""
 
-    hparams = tf.contrib.training.HParams(
+    hparams = contrib.training.HParams(
         ################################
         # Experiment Parameters        #
         ################################
@@ -19,16 +20,17 @@ def create_hparams(hparams_string=None, verbose=False):
         dist_url="tcp://localhost:54321",
         cudnn_enabled=True,
         cudnn_benchmark=False,
-        ignore_layers=['speaker_embedding.weight'],
+        ignore_layers=None,
 
         ################################
         # Data Parameters             #
         ################################
-        training_files='filelists/ljs_audiopaths_text_sid_train_filelist.txt',
-        validation_files='filelists/ljs_audiopaths_text_sid_val_filelist.txt',
-        text_cleaners=['english_cleaners'],
-        p_arpabet=1.0,
-        cmudict_path="data/cmu_dictionary",
+        training_files='/scratch/rafje/complete_synth/audiopath_train_final.txt',
+        validation_files='/scratch/rafje/complete_synth/audiopath_val_final.txt',
+        text_cleaners=['transliteration_cleaners'],
+        p_arpabet=0.0,
+        #cmudict_path="data/cmu_dictionary",
+        cmudict_path=None,
 
         ################################
         # Audio Parameters             #
@@ -85,7 +87,7 @@ def create_hparams(hparams_string=None, verbose=False):
         postnet_n_convolutions=5,
 
         # Speaker embedding
-        n_speakers=123,
+        n_speakers=657,
         speaker_embedding_dim=128,
 
         # Reference encoder
@@ -110,16 +112,16 @@ def create_hparams(hparams_string=None, verbose=False):
         learning_rate_anneal=50000,
         weight_decay=1e-6,
         grad_clip_thresh=1.0,
-        batch_size=32,
+        batch_size=16,
         mask_padding=True,  # set model's padded outputs to padded values
 
     )
 
     if hparams_string:
-        tf.compat.v1.logging.info('Parsing command line hparams: %s', hparams_string)
+        compat.v1.logging.info('Parsing command line hparams: %s', hparams_string)
         hparams.parse(hparams_string)
 
     if verbose:
-        tf.compat.v1.logging.info('Final parsed hparams: %s', hparams.values())
+        compat.v1.logging.info('Final parsed hparams: %s', hparams.values())
 
     return hparams

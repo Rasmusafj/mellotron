@@ -9,9 +9,9 @@ from text import cmudict
 _punctuation = '!\'",.:;? '
 _math = '#%&*+-/[]()'
 _special = '_@©°½—₩€$'
-_accented = 'áçéêëñöøćž'
+_accented = 'áçéêëñöøćžüä'
 _numbers = '0123456789'
-_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅabcdefghijklmnopqrstuvwxyzæøå'
 
 # Prepend "@" to ARPAbet symbols to ensure uniqueness (some are the same as
 # uppercase letters):
