@@ -76,7 +76,7 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     print("Warm starting model from checkpoint '{}'".format(checkpoint_path))
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     model_dict = checkpoint_dict['state_dict']
-    if len(ignore_layers) > 0:
+    if ignore_layers and len(ignore_layers) > 0:
         model_dict = {k: v for k, v in model_dict.items()
                       if k not in ignore_layers}
         dummy_dict = model.state_dict()
