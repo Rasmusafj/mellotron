@@ -1,3 +1,4 @@
+import argparse
 import random
 import os
 import re
@@ -5,8 +6,10 @@ import numpy as np
 import torch
 import torch.utils.data
 import librosa
+from torch.utils.data import DistributedSampler, DataLoader
 
 import layers
+from hparams import create_hparams
 from utils import load_wav_to_torch, load_filepaths_and_text
 from text import text_to_sequence, cmudict
 from yin import compute_yin
@@ -77,9 +80,8 @@ class TextMelLoader(torch.utils.data.Dataset):
         if sampling_rate != self.stft.sampling_rate:
             raise ValueError("{} SR doesn't match target {} SR".format(
                 sampling_rate, self.stft.sampling_rate))
-        audio_norm = audio / self.max_wav_value
-        audio_norm = audio_norm.unsqueeze(0)
-        melspec = self.stft.mel_spectrogram(audio_norm)
+
+        melspec = self.stft.mel_spectrogram(audio.unsqueeze(0))
         melspec = torch.squeeze(melspec, 0)
 
         f0 = self.get_f0(audio.cpu().numpy(), self.sampling_rate,
@@ -157,3 +159,44 @@ class TextMelCollate():
                         output_lengths, speaker_ids, f0_padded)
 
         return model_inputs
+
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o', '--output_directory', type=str,
+                        help='directory to save checkpoints')
+    parser.add_argument('-l', '--log_directory', type=str,
+                        help='directory to save tensorboard logs')
+    parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
+                        required=False, help='checkpoint path')
+    parser.add_argument('--warm_start', action='store_true',
+                        help='load model weights only, ignore specified layers')
+    parser.add_argument('--n_gpus', type=int, default=1,
+                        required=False, help='number of gpus')
+    parser.add_argument('--rank', type=int, default=0,
+                        required=False, help='rank of current gpu')
+    parser.add_argument('--group_name', type=str, default='group_name',
+                        required=False, help='Distributed group name')
+    parser.add_argument('--hparams', type=str,
+                        required=False, help='comma separated name=value pairs')
+
+    args = parser.parse_args()
+    hparams = create_hparams(args.hparams)
+
+    torch.backends.cudnn.enabled = hparams.cudnn_enabled
+    torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
+
+
+    # Get data, data loaders and collate function ready
+    trainset = TextMelLoader(hparams.training_files, hparams)
+    valset = TextMelLoader(hparams.validation_files, hparams,
+                           speaker_ids=trainset.speaker_ids)
+
+    (text, mel, speaker_id, f0) = trainset[1]
+
+    print(text)
+    plt.imshow(mel)
+    plt.colorbar()
+    plt.show()

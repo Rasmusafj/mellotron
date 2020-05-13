@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.io.wavfile import read
+import scipy.io.wavfile as wav
 import torch
 
 
@@ -11,8 +11,15 @@ def get_mask_from_lengths(lengths):
 
 
 def load_wav_to_torch(full_path):
-    sampling_rate, data = read(full_path)
-    return torch.FloatTensor(data.astype(np.float32)), sampling_rate
+    sampling_rate, sound = wav.read(full_path)
+
+    if len(sound.shape) > 1:
+        if sound.shape[1] == 1:
+            sound = sound.squeeze()
+        else:
+            sound = sound.mean(axis=1)  # multiple channels, average
+
+    return torch.FloatTensor(sound.astype(np.float32)), sampling_rate
 
 
 def load_filepaths_and_text(filename, split="|"):
